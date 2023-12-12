@@ -1,0 +1,166 @@
+<html>
+
+<head>
+    <title>three.js + ar.js</title>
+    <meta name="viewport" content="width=device-width, viewport-fit=cover, shrink-to-fit=no" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        .wrapper {
+            position: relative;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrapper">
+        <canvas></canvas>
+    </div>
+    <!--❶ three.jsとAR.jsを読み込む-->
+    <script src="https://unpkg.com/three@0.127.0/build/three.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/3.3.3/three.js/build/ar.js"></script>
+    <script async>
+        const renderer = new THREE.WebGLRenderer({
+            canvas: document.querySelector('canvas'),
+            antialias: true,
+            alpha: true
+        });
+        const camera = new THREE.PerspectiveCamera();
+        const scene = new THREE.Scene();
+        const markerRoot = new THREE.Group();
+        const arToolkitContext = new THREEx.ArToolkitContext({
+            cameraParametersUrl: './camera.dat', // ❷ camera.datを読み込む
+            detectionMode: 'mono'
+        });
+        const arToolkitSource = new THREEx.ArToolkitSource({
+            sourceType: 'webcam'
+        });
+        const arMarkerControl = new THREEx.ArMarkerControls(arToolkitContext, markerRoot, {
+            type: 'pattern',
+            patternUrl: 'pattern-flower.patt' // ❸ pattern.pattを読み込む
+        });
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        window.addEventListener('resize', handleResize, {
+            passive: true
+        });
+
+        arToolkitContext.init(() => {
+            camera.projectionMatrix.copy(arToolkitContext.getProjectionMatrix());
+        });
+
+        arToolkitSource.init(() => {
+            document.querySelector('.wrapper').appendChild(arToolkitSource.domElement); // ❹ videoタグを.wrapper配下に移動させる
+            setTimeout(handleResize, 400); // ❺ リサイズイベントを一度発火させる
+        });
+
+        scene.add(markerRoot);
+
+        const directionalLight = new THREE.DirectionalLight(0xFFFFFF);
+        directionalLight.position.set(1, 0, 1);
+        scene.add(directionalLight);
+
+        function createflower(x, y, z) {
+            var colorary = [0xffffff, 0xfffaf0, 0xffefd5, 0xffe4b5, 0xffe4e1, 0xfdf5e6, 0xfffff0, 0xf0fff0, 0xf0ffff, 0xfff8dc, 0xafeeee, 0x98fb98, 0xeee8aa, 0xfffacd, 0xb0c4de, 0x4682b4, 0x00bfff, 0x87ceeb, 0x40e0d0, 0x00ced1, 0x008b8b, 0x8fbc8f, 0x9acd32, 0x6b8e23, 0xd2b48c, 0xffd700, 0xffa500, 0xff8c00, 0xcd853f, 0xa0522d, 0xcd5c5c, 0xe9967a, 0xfa8072, 0xff7f50, 0xdc143c, 0xdb7093, 0xffc0cb, 0xee82ee, 0xdda0dd, 0x9370db, 0x7b68ee];
+            var colorcode = Math.floor(Math.random() * colorary.length);
+            console.log(colorcode);
+            const kazaguruma_geometry = new THREE.TorusKnotGeometry(0.15, 0.1, 23, 6, 3, 5);
+            const kazaguruma_material = new THREE.MeshBasicMaterial({ color: colorary[colorcode] });
+            const kazaguruma = new THREE.Mesh(kazaguruma_geometry, kazaguruma_material);
+            const kazagurumaflame_geometry = new THREE.TorusKnotGeometry(0.15, 0.1, 23, 6, 3, 5);
+            var linecolor = 0xc0c0c0;
+            if (colorcode <= 13) {
+                linecolor = 0xc0c0c0;
+            }
+            if (colorcode > 13) {
+                linecolor = 0xfafafa;
+            }
+            const kazagurumaflame_material = new THREE.MeshBasicMaterial({ color: linecolor });
+            kazagurumaflame_material.wireframe = true;
+            const kazagurumaflame = new THREE.Mesh(kazagurumaflame_geometry, kazagurumaflame_material);
+            kazaguruma.add(kazagurumaflame);
+            markerRoot.add(kazaguruma);
+            kazaguruma.rotation.x += Math.PI / 180 * 60;
+            kazaguruma.position.set(x, y, z);
+            const geometry = new THREE.SphereGeometry(0.5, 30, 16, 2.34362811957799, 1.64619455048105, 2.4, 0.8);
+            const material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, color: 0x3cb371 });
+            const reef = new THREE.Mesh(geometry, material);
+            reef.rotation.y -= Math.PI / 180 * 45;
+            reef.rotation.x -= Math.PI / 180 * 90;
+            reef.position.z += -0.35;
+            reef.position.y += -0.035;
+            reef.position.x += 0.;
+            const geometry1 = new THREE.SphereGeometry(0.5, 30, 16, 2.34362811957799, 1.34619455048105, 2.4, 0.8);
+            const material1 = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, color: 0x3cb371 });
+            const reef1 = new THREE.Mesh(geometry1, material1);
+            kazaguruma.add(reef1);
+            reef1.rotation.y += Math.PI / 180 * 15;
+            reef1.rotation.x += Math.PI / 180 * 105;
+            reef1.position.z += -0.35;
+            reef1.position.y += 0.05;
+            reef1.position.x += -0.11;
+            reef1.rotation.z -= Math.PI / 180 * 200;
+            kazaguruma.add(reef);
+
+        }
+
+        const listener = new THREE.AudioListener();
+        camera.add(listener);
+        const AudioLoader = new THREE.AudioLoader();
+        const SESound = new THREE.Audio(listener);
+        AudioLoader.load('./SE.mp3', function (buffer) {
+            SESound.setBuffer(buffer);
+            SESound.setLoop(false);
+            SESound.setVolume(0.5);
+
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener("mousedown", function (ret) {
+            let mouseX = ret.clientX;                           // マウスのx座標
+            let mouseY = ret.clientY;                           // マウスのy座標
+            //console.log(mouseX + " : " + mouseY);
+            mouseX = (mouseX / window.innerWidth) * 2 - 1;    // -2.5 ～ +2.5 に正規化されたx座標
+            mouseY = -(mouseY / window.innerHeight) * 2 + 1;    // -2.5 ～ +2.5 に正規化されたy座標
+            let pos = new THREE.Vector3(mouseX, mouseY, 1);     // マウスベクトル
+            let x = pos.getComponent(0);
+            let y = pos.getComponent(2);
+            let z = -1 * pos.getComponent(1);
+            console.log(x, y, z);
+            const flower = createflower(x, y, z);
+
+            SESound.play();
+
+        });
+
+        renderer.setAnimationLoop((delta) => {
+            if (arToolkitSource.ready) {
+                arToolkitContext.update(arToolkitSource.domElement);
+            }
+
+            renderer.render(scene, camera);
+        });
+
+        function handleResize() {
+            if (arToolkitSource.ready) {
+                arToolkitSource.onResize();
+                arToolkitSource.copySizeTo(renderer.domElement);
+            }
+
+            renderer.setPixelRatio(window.devicePixelRatio);
+        }
+    </script>
+</body>
+
+</html>
